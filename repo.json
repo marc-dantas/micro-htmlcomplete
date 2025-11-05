@@ -1,0 +1,15 @@
+[{
+  "Name": "htmlcomplete",
+  "Description": "plugin to improve user's quality-of-life using HTML in micro",
+  "Tags": ["formatter"],
+  "Website": "https://github.com/marc-dantas/micro-htmlcomplete",
+  "Versions": [
+    {
+      "Version": "2.0.0",
+      "Url": "https://github.com/marc-dantas/micro-htmlcomplete//2.0.0.zip",
+      "Require": {
+        "micro": ">=2.0.0"
+      }
+    }
+  ]
+}]
