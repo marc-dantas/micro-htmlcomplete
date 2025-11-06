@@ -7,13 +7,6 @@ local selfclosing_tags = {
     "track", "embed", "param", "wbr"
 }
 
--- Common attributes
-local attrs = {
-    "class", "id", "src", "href",
-    "alt", "title", "style",
-    "name", "value", "type", "for"
-}
-
 local boilerplate = [[
 
 <html lang="en">
@@ -28,14 +21,45 @@ local boilerplate = [[
 </body>
 </html>]]
 
+function is_inside_tag(before, after)
+    local b = before:match("<%w+%s*.*>$")
+    if b == nil then return false end
+    local e = after:match("^</%w+>")
+    if e == nil then return false end
+    return true
+end
+
+function strip(x)
+    return x:gsub("^%s*(.*)%s*$", "%1")
+end
+
+function onInsertNewline(bp)
+    if bp.Buf:FileType() ~= "html" then return false end
+    if bp.Cursor.Loc.Y <= 0 then return false end
+    local before = strip(bp.Buf:Line(bp.Cursor.Loc.Y-1))
+    local after  = strip(bp.Buf:Line(bp.Cursor.Loc.Y))
+    local tabsize = bp.Buf.Settings["tabsize"]
+    if is_inside_tag(before, after) then
+        local indent = bp.Cursor.Loc.X
+        bp:InsertNewline()
+        local loc = {Y = bp.Cursor.Loc.Y-1, X = 0}
+        bp.Cursor:GotoLoc(loc)
+        bp.Buf:Insert(loc, string.rep(" ", indent))
+        bp.Cursor:End()
+        bp:IndentLine()
+        return true
+    end
+end
+
 function onRune(bp, rune)
     if bp.Buf:FileType() ~= "html" then return end
-    if rune == ">" then
-        local buf = bp.Buf
-        local line = buf:Line(bp.Cursor.Loc.Y)
-        line = line:sub(1, bp.Cursor.Loc.X)
-        line = line:gsub("^%s*(.-)%s*$", "%1")
 
+    local buf = bp.Buf
+    local line = buf:Line(bp.Cursor.Loc.Y)
+    line = line:sub(1, bp.Cursor.Loc.X)
+    line = strip(line)
+    
+    if rune == ">" then
         if line == "<!DOCTYPE html>" then
             bp.Buf:Insert({Y = bp.Cursor.Loc.Y, X = bp.Cursor.Loc.X}, boilerplate)
             bp.Cursor:GotoLoc({ X = bp.Cursor.Loc.X, Y = bp.Cursor.Loc.Y-2})
