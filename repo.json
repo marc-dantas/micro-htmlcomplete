@@ -6,7 +6,7 @@
   "Versions": [
     {
       "Version": "2.0.0",
-      "Url": "https://github.com/marc-dantas/micro-htmlcomplete//2.0.0.zip",
+      "Url": "https://github.com/marc-dantas/micro-htmlcomplete/releases/download/1.0/htmlcomplete-2.0.0.zip",
       "Require": {
         "micro": ">=2.0.0"
       }
