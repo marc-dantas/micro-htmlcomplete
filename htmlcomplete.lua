@@ -82,9 +82,10 @@ function onRune(bp, rune)
 </body>
 </html>]]
 
+	local boilerplate_trigger = "html>"
 	if rune == ">" then
-		if line == "html>" then
-			bp.Buf:Remove({ Y = bp.Cursor.Loc.Y - 1 }, { X = 5 })
+		if string.sub(line, #line - #boilerplate_trigger+1, #line) == boilerplate_trigger then
+			bp.Buf:Remove({ Y = bp.Cursor.Loc.Y - 1 }, { X = #line })
 			bp.Buf:Insert({ Y = bp.Cursor.Loc.Y, X = bp.Cursor.Loc.X }, boilerplate)
 			bp.Cursor:GotoLoc({ X = tabsize, Y = bp.Cursor.Loc.Y - 2 })
 			micro.InfoBar():Message("Autocompleted boilerplate")
