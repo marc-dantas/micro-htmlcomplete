@@ -34,26 +34,31 @@ function strip(x)
 	return x:gsub("^%s*(.*)%s*$", "%1")
 end
 
-function onInsertNewline(bp)
+function preInsertNewline(bp)
 	if bp.Buf:FileType() ~= "html" then
-		return false
-	end
-	if bp.Cursor.Loc.Y <= 0 then
-		return false
-	end
-	local before = strip(bp.Buf:Line(bp.Cursor.Loc.Y - 1))
-	local after = strip(bp.Buf:Line(bp.Cursor.Loc.Y))
-	local tabsize = bp.Buf.Settings["tabsize"]
-	if is_inside_tag(before, after) then
-		local indent = bp.Cursor.Loc.X
-		bp:InsertNewline()
-		local loc = { Y = bp.Cursor.Loc.Y - 1, X = 0 }
-		bp.Cursor:GotoLoc(loc)
-		bp.Buf:Insert(loc, string.rep(" ", indent))
-		bp.Cursor:End()
-		bp:IndentLine()
 		return true
 	end
+	if bp.Cursor.Loc.Y <= 0 then
+		return true
+	end
+	local tabsize = bp.Buf.Settings["tabsize"]
+	local line = bp.Buf:Line(bp.Cursor.Loc.Y)
+
+	local before = string.sub(line, 1, bp.Cursor.Loc.X)
+	local after = string.sub(line, bp.Cursor.Loc.X+1, #line)
+	
+	if is_inside_tag(before, after) then
+		local indent_end = string.find(before, "%S")
+		local indent = string.sub(before, 1, indent_end-1)
+		
+		bp:InsertNewline()
+		bp:InsertNewline()
+		bp.Cursor:GotoLoc({ X = 0, Y = bp.Cursor.Loc.Y-1 })
+		bp.Buf:Insert({ X = bp.Cursor.Loc.X, Y = bp.Cursor.Loc.Y }, indent .. string.rep(" ", tabsize))
+		bp.Cursor:End()
+		return false
+	end
+	return true
 end
 
 function onRune(bp, rune)
@@ -78,7 +83,7 @@ function onRune(bp, rune)
 ]] .. tab .. [[<title>Document</title>
 </head>
 <body>
-]] .. tab .. [[   
+
 </body>
 </html>]]
 
@@ -87,6 +92,7 @@ function onRune(bp, rune)
 		if string.sub(line, #line - #boilerplate_trigger+1, #line) == boilerplate_trigger then
 			bp.Buf:Remove({ Y = bp.Cursor.Loc.Y - 1 }, { X = #line })
 			bp.Buf:Insert({ Y = bp.Cursor.Loc.Y, X = bp.Cursor.Loc.X }, boilerplate)
+			bp.Buf:Insert({ Y = bp.Cursor.Loc.Y - 2, X = bp.Cursor.Loc.X }, tab)
 			bp.Cursor:GotoLoc({ X = tabsize, Y = bp.Cursor.Loc.Y - 2 })
 			micro.InfoBar():Message("Autocompleted boilerplate")
 			return
